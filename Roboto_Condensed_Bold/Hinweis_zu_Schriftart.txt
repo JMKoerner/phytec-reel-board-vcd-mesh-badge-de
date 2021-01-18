@@ -1,0 +1,9 @@
+Hinweis zu den hier abgelegten Schriftarten:
+--------------------------------------------
+
+Diese sind auszutauschen mit denen, die unter:
+zephyrproject/modules/lib/gui/lvgl/src/lv_font
+liegen. Vor Überschreiben die Dateien sichern.
+
+Stand 11.01.2021   JK LUG Noris
+
