@@ -6,6 +6,7 @@ This demo combined a LvGL demo with the mesh-badge demo, both from PHYTEC Messte
 
 For more information please read README.rst (german/english)
 
+This is a contribute of the Linux User Group Nuremberg www.lug-noris.de
 
 Add. Info: MIT licence for modules qrcode*.* 
 
