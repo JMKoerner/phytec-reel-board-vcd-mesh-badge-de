@@ -8,17 +8,17 @@ Deutsch - Übersicht
 
 Dies ist die deutsche Version für die Anwendung "mesh_badge" für das
 Phytec "reel board". Die Texte für das ePaper sind ins Deutsche 
-übersetzt, die Debug-Infos nur teilweise. Die Funktion Meshen wurde 
+übersetzt, die Debug-Infos allerdings nur teilweise. Die Funktion Meshen wurde 
 geringfügig erweitert. Anstelle "Saying HI to everyone" erfolgt nun
 mit eingefügtem Sendername "<Name> sagt "Hallo" zu Jedem!". Weiterhin
-wurde das LVGL Beispiel von Phytec mit QR-Code in "mesh-badge" 
+wurde das LvGL Beispiel von Phytec mit QR-Code in "mesh-badge" 
 integriert.
 
 Das Projekt ist so anzunehmen wie es ist. Die Anwendung der Software 
-erfolgt auf eigenem Risiko. Verwendet wurde das "reelBoard V1" sowie 
+erfolgt auf eigenem Risiko. Verwendet wurde das "reelBoard 1507.1" sowie 
 die sdk-0.10.3.
 
-Die Eingabe über GATT erfolgt mit:
+Die Eingabe über HCITOOL und GATT erfolgt mit:
 Vorname Nachname,Position/Berufsbezeichnung
 (siehe Anleitung "Bedienung vcd_mesh_badge_de")
 
@@ -30,8 +30,8 @@ Diese App wurde ursprünglich als eine Bluetooth GATT Anwendung entwickelt.
 Installieren Sie die "nRF Connect" App auf Ihr Smartphone (verfügbar 
 für Android und iOS) um den Dienst mit dem "reel board" nutzen zu 
 können. Mit einem PC kann ebenso mit jedem Bluetooth LE GATT client 
-auf den Dienst zugegriffen werden. Diese Hinweise hier beziehen
-sich auf die notwendigen Schritte für Mobiles.
+sowie mit dem HCITOOL auf den Dienst zugegriffen werden. Diese Hinweise 
+hier beziehen sich auf die notwendigen Schritte für Mobiles.
 
 Bedienung
 *********
@@ -43,9 +43,9 @@ Bedienung
 #. Durch Drücken der "Pfeil nach oben" Taste wählen Sie "Schreiben" aus.
 #. Wählen Sie "Text" anstelle von HEX-Eingabe aus.
 #. Geben Sie ihren Namen ein (oder einen anderen Text). Mehrere Worte
-   getrennt durch Leerzeichen sind möglich. Die Zeichengröße auf dem 
-   reel board erlaubt 3 Spalten mit je 12 Zeichen. Einen Zeilenumbruch kann
-   mit einem Komma erzwungen werden.
+   getrennt durch Leerzeichen sind möglich. Die Eingabefelder auf dem 
+   reel board erlauben 2 Zeilen mit ca. je 23 Zeichen. Die Eingabe
+   erfolgt mit "Vorname Nachname,Berufsbezeichnung".
 #. Drücken Sie "Send". Im nächsten Schritt erfolgt das Pairing. Der Passkey
    wird auf dem Board angezeigt. Übernehmen Sie diesen auf Ihr Smartphone.
 #. Wenn das Pairing erfolgt ist, wird der gesendete Text angezeigt. Wenn Sie
@@ -53,7 +53,7 @@ Bedienung
 #. Wenn alles ok ist, trennen das Board (beenden Sie die App oder gehen
    Sie auf die Scann Seite ihres Phones.
 #. Einmal getrennt, schaltet das Board in den Bluetooth Mesh Mode. Von da an
-   kann man das Board nicht mehr über GATT angesprechen.
+   kann man das Board nicht mehr über GATT oder HCITOOL angesprechen.
    
 Wenn man mehrere Boards wie dieses konfiguriert, kommunizieren dies untereinander 
 via mesh: durch Drücken des "user" Knopfes auf dem Board wird das erste Wort 
@@ -64,17 +64,18 @@ Um das Board in seinen initialen Zustand zurückzusetzen (Abschalten von mesh,
 Löschen des gespeicherten Textes und Wiederansprechen über GATT) sind folgende
 Schritte notwendig:
 
-#. Beim Einschalten den "User"-Knopf gedrückt halten (oder gemeinsam mit dem
-   "Reset"-Knopf falls eingeschaltet).
-#. Warten, bis "Reseting Device" angezeigt wird.
+#. Beim Einschalten den "User"-Knopf gedrückt halten und dann kurz den Resetknopf
+   betätigen (oder gemeinsam mit dem "Reset"-Knopf falls eingeschaltet).
+#. Warten, bis "Geraet Ruecksetzen" angezeigt wird und das Flackern des
+   kleinen Rechteckes rechts unten auf dem Display beendet ist..
 
 
 
 Die Original-Software (Master) stammt von
 https://github.com/zephyrproject-rtos/zephyr/tree/master/samples/boards/reel_board/mesh_badge
 
-Um diese für das "reel board", auch in der Deutschen Version kompiliernen zu können,
-benötigen Sie die ZEPHYR Entwicklungsumgebung. Weitere Infos hierzu finden Sie unter 
+Um diese für das "reel board" kompiliernen zu können, benötigen Sie die ZEPHYR 
+Entwicklungsumgebung. Weitere Infos hierzu finden Sie unter 
 https://docs.zephyrproject.org/latest/boards/arm/reel_board/doc/reel_board.html
 
 
