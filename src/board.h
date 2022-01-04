@@ -26,10 +26,11 @@ void board_blink_leds(void);
 void board_add_hello(u16_t addr, const char *name);
 void board_add_heartbeat(u16_t addr, u8_t hops);
 void vcd_epaper(const char* vcdName, const char* vcdProf, const bool scr_new);
+void vcd_epaper_sup(const char* vcdName, const bool scr_new);
+void sound_activ();
 int get_hdc1010_val(struct sensor_value *val);
 int get_mma8652_val(struct sensor_value *val);
 int get_apds9960_val(struct sensor_value *val);
 int set_led_state(u8_t id, bool state);
 int periphs_init(void);
 int board_init(void);
-

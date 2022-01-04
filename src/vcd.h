@@ -10,16 +10,34 @@
  *
 */
 
+#define LUG_Noris
+//#define LUG_Mitterteich
+
+
+#ifdef LUG_Noris
 // Globale Variablen, Feste Anteile der VCD
 char *name_vcd = "Neuer Name";
+// Erste Anzeigeebene
 static const char *qr_text = "https://www.lug-noris.de/index.php";
 static const char *text_right = "LUG-Noris.de";
 static const char *text_bottom2 = "Linux User Group N\xfcrnberg";
-//static const char *text_bottom2 = ["Linux User Group Nürnberg" UTF8String];
-//static const char *text_right2 = CONFIG_BOARD;
+// Zweite Anzeigeebene
+static const char *text_sup_top = "LINUX";
+static const char *text_sup_middle = "User Group";
+static const char *text_sup_middle2 = "N\xfcrnberg";
+#endif
 
-// Variable Anteile der VCD, werden via Bluetooth in reel_board.c gesetzt:
-//static char *text_right2 = "";  //"Position/Aufgabenbereich";
-//static char *text_bottom = "";  //"Vorname Nachname";
+#ifdef LUG_Mitterteich
+// Globale Variablen, Feste Anteile der VCD
+char *name_vcd = "Neuer Name";
+// Erste Anzeigeebene
+static const char *qr_text = "https://www.linux-mitterteich.de";
+static const char *text_right = "LUG-Mitterteich";
+static const char *text_bottom2 = "Linux User Group Mitterteich";
+// Zweite Anzeigeebene
+static const char *text_sup_top = "LINUX";
+static const char *text_sup_middle = "User Group";
+static const char *text_sup_middle2 = "Mitterteich";
+#endif
 
 

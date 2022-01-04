@@ -14,6 +14,7 @@
 #include <sys/printk.h>
 #include <drivers/flash.h>
 #include <drivers/sensor.h>
+#include <drivers/pwm.h>
 
 #include <zephyr/types.h>
 
@@ -33,6 +34,19 @@
 #include "mesh.h"
 #include "board.h"
 
+// Für Board 1507.1 auskommentieren (PWM), PWM-LED leuchtet dauerhaft!  31.12.21
+#define beeper
+
+#if defined(DT_ALIAS_PWM_LED0_PWMS_CONTROLLER) && defined(DT_ALIAS_PWM_LED0_PWMS_CHANNEL)
+/* get the defines from dt (based on alias 'pwm-led0') */
+#define PWM_DRIVER	DT_ALIAS_PWM_LED0_PWMS_CONTROLLER
+#define PWM_CHANNEL	DT_ALIAS_PWM_LED0_PWMS_CHANNEL
+#else
+#error "Choose supported PWM driver"
+#endif
+
+// #define PWM_POLARITY_INVERTED
+
 enum font_size {
 	FONT_BIG = 2,
 	FONT_MEDIUM = 1,
@@ -41,8 +55,9 @@ enum font_size {
 
 enum screen_ids {
 	SCREEN_MAIN = 0,
-	SCREEN_SENSORS = 1,
-	SCREEN_STATS = 2,
+	SCREEN_SUP = 1,
+	SCREEN_SENSORS = 2,
+	SCREEN_STATS = 3,
 	SCREEN_LAST,
 };
 
@@ -53,6 +68,8 @@ struct font_info {
 	[FONT_MEDIUM] = { .columns = 16 },
 	[FONT_SMALL] =  { .columns = 25 },
 };
+
+static struct device *pwm_dev;
 
 #define LONG_PRESS_TIMEOUT K_SECONDS(1)
 
@@ -76,7 +93,14 @@ static struct k_delayed_work epd_work;
 static struct k_delayed_work long_press_work;
 static char str_buf[256];
 static bool main_renew = true;
+static bool sup_renew  = true;
+static u8_t screen_id_neu = 0;
+static u8_t screen_id_alt = 0;
 
+static char vcd_name[20]="";
+static char vname[20]="";
+static char vcd_prof[CONFIG_BT_DEVICE_NAME_MAX]="";
+static char buf2[CONFIG_BT_DEVICE_NAME_MAX]="";
 
 static struct {
 	struct device *dev;
@@ -146,9 +170,62 @@ static size_t get_len(enum font_size font, const char *text)
 	return fonts[font].columns;
 }
 
+void sound_activ(u32_t period)
+{
+#ifdef beeper
+
+/* Hinweis: Für Zephyr 2.1 rc1 ist der letzte Parameter (hier die 0) bei pwm_pin_set_usec wegzulassen */
+
+/* Sound ein , aktiv nur für 1507.3, bei 1507.1 leuchtet die PWM-LED auf Dauer !!! */
+if (pwm_pin_set_usec(pwm_dev, PWM_CHANNEL,
+		period, period / 2U, 0)) {   // Parameter 0 für normal; 1 für invertiert
+		printk("pwm pin set fails\n");
+		return;
+		}
+k_sleep(K_MSEC(150));  // Verzögerung um 0.15 sec
+
+/* Sound aus */
+pwm_pin_set_usec(pwm_dev, PWM_CHANNEL, 0, 0, 0);
+k_sleep(K_MSEC(100));  // Warten/Verzögerung um 0.1 sec
+#else
+printk("PWM (Beeper) nicht aktiv!\n");
+#endif
+}
+
 void board_blink_leds(void)
 {
 	k_delayed_work_submit(&led_timer, K_MSEC(100));
+}
+
+void name_select(void)
+{
+	/* Auftrennung BLE-Puffer in Vorname, Nachname, Profession */
+	int i, t, s;  s = 0;
+
+	strncpy(buf2, bt_get_name(), sizeof(buf2) - 1);
+	buf2[sizeof(buf2) - 1] = '\0';
+
+	/* Weist Vornamen+Nachnamen vc_name zu */
+	for (i = 0; buf2[i] != ','; i++) {
+		if (i < 21) {		// Max. Länge Vorname+Nachname 20 Zeichen
+			vcd_name[i] = buf2[i];
+			s= i + 1;
+		}
+	}
+
+	/* Weist Profession vcd_prof zu */
+	for (t = s + 1; buf2[t] != '\0'; t++) {
+		vcd_prof[t-s-1] = buf2[t];
+	}
+
+	/* Weist Vornamen alleine vname zu */
+	for (i = 0; buf2[i] != ' '; i++) {
+		if (i < 21) {		// Max. Länge Vorname 20 Zeichen
+			vname[i] = buf2[i];
+//			printk("i=  %d\n",i);
+		}
+	vname[i+1] = '\0';
+	}
 }
 
 void board_show_text(const char *text, bool center, s32_t duration)
@@ -355,8 +432,6 @@ static void show_statistics(void)
 	}
 
 	cfb_framebuffer_finalize(epd_dev);
-
-	pressed = !pressed;    // Soll zur Verhinderung von "Name" sagt Hallo .. beitragen
 }
 
 static void show_sensors_data(s32_t interval)
@@ -421,35 +496,36 @@ static void show_main(void)
 {
 	cfb_framebuffer_clear(epd_dev, false);
 
-	static char vcd_name[CONFIG_BT_DEVICE_NAME_MAX + 2]="";
-	static char vcd_prof[CONFIG_BT_DEVICE_NAME_MAX + 2]="";
-
-	char buf[CONFIG_BT_DEVICE_NAME_MAX];
-
-	int i, t, s;
-	s=0;
-
-        /* Einlesen des BLE-Puffers und Aufspaltung Name und Profession */
-
-	strncpy(buf, bt_get_name(), sizeof(buf) - 1);
-	buf[sizeof(buf) - 1] = '\0';
-
-	/* Weist Namen vc_name zu */
-	for (i = 0; buf[i] != ','; i++) {
-		if (i < 21) {		// Max. Länge Vorname/Nachname 20 Zeichen
-			vcd_name[i] = buf[i];
-			s= i + 1;
-		}
-	}
-
-	/* Weist Profession vcd_prof zu */
-	for (t = s + 1; buf[t] != '\0'; t++) {
-		vcd_prof[t-s-1] = buf[t];
-	}
-
- 	/* Aufruf über LvGL (Grafikmode), main_renew nur beim Start auf true: */
+ 	/* Aufruf über LVGL (Grafikmode), main_renew nur beim Start auf true: */
 	vcd_epaper(vcd_name, vcd_prof, main_renew);
 
+	/* Handshake zwischen den beiden Modulen screen_main und screen_sup */
+	sup_renew  = true;
+
+	/* Wenn im Bluetooth-Mode, Display immer direkt beschreiben */
+	if (!mesh_is_initialized()) {
+		main_renew = true;
+	} else {
+		main_renew = false;
+	}
+}
+
+static void show_sup(void)
+{
+	cfb_framebuffer_clear(epd_dev, false);
+
+ 	/* Aufruf über LVGL (Grafikmode), sup_renew nur beim Start auf true: */
+	vcd_epaper_sup(vname, sup_renew);
+
+	/* Handshake zwischen den beiden Modulen screen_main und screen_sup */
+	main_renew = true;
+
+	/* Wenn im Bluetooth-Mode, Display immer direkt beschreiben */
+	if (!mesh_is_initialized()) {
+		sup_renew = true;
+	} else {
+		sup_renew = false;
+	}
 }
 
 static bool button_is_pressed(void)
@@ -470,7 +546,12 @@ static void epd_update(struct k_work *work)
 	case SCREEN_SENSORS:
 		show_sensors_data(K_SECONDS(2));
 		return;
+	case SCREEN_SUP:
+		name_select();
+		show_sup();
+		return;
 	case SCREEN_MAIN:
+		name_select();
 		show_main();
 		return;
 	}
@@ -498,7 +579,6 @@ static void button_interrupt(struct device *dev, struct gpio_callback *cb,
 	printk("Button %s\n", pressed ? "pressed" : "released");
 
 	if (pressed) {
-		main_renew = false;
 		k_delayed_work_submit(&long_press_work, LONG_PRESS_TIMEOUT);
 		return;
 	}
@@ -516,9 +596,12 @@ static void button_interrupt(struct device *dev, struct gpio_callback *cb,
 		stat_on = true;
 		return;
 	case SCREEN_MAIN:
+	case SCREEN_SUP:
 		if (pins & BIT(DT_ALIAS_SW0_GPIOS_PIN)) {
 			u32_t uptime = k_uptime_get_32();
 			static u32_t bad_count, press_ts, t_on;
+
+			screen_id_neu = screen_id;
 
 			if (uptime - press_ts < 500) {
 				bad_count++;
@@ -535,16 +618,20 @@ static void button_interrupt(struct device *dev, struct gpio_callback *cb,
 				}
 			} else {
 				if (!pressed) {
-					t_on = uptime - uptime2;
-					if ((t_on > 0U) && (t_on < 100U)) {
-						if (!stat_on) {
-							mesh_send_hello();
-						} else {
-							stat_on = false;
+					if ((screen_id_neu-screen_id_alt) == 0) {
+						t_on = uptime - uptime2;
+//						printk("Delta Zeit: (t_on  %d)\n", t_on);
+						if ((t_on > 0U) && (t_on < 10U)) {
+							if (!stat_on) {
+								mesh_send_hello();
+							} else {
+								stat_on = false;
+							}
 						}
 					}
 				}
 			}
+			screen_id_alt = screen_id_neu;
 			press_ts = uptime;
 		}
 		uptime2 = k_uptime_get_32();
@@ -641,6 +728,13 @@ int board_init(void)
 		printk("SSD16XX device not found\n");
 		return -ENODEV;
 	}
+
+	pwm_dev = device_get_binding(PWM_DRIVER);
+	if (pwm_dev == NULL) {
+		printk("Cannot find %s!\n", PWM_DRIVER);
+		return -EIO;
+	}
+
 
 	display=device_get_binding(CONFIG_LVGL_DISPLAY_DEV_NAME);
 	if (display == NULL) {

@@ -342,7 +342,9 @@ static void vnd_hello(struct bt_mesh_model *model,
 
 	strcat(str, " sagt Hallo!");
 
-	board_show_text(str, false, K_SECONDS(3));
+	sound_activ(1000);
+
+	board_show_text(str, false, K_SECONDS(2));
 
 	board_blink_leds();
 }
@@ -492,7 +494,7 @@ static void send_hello(struct k_work *work)
 			buf_shift_right(buf_local, buf_len, i, Laufindex);
 			buf_local[i] = 0x75; buf_local[i+1] = 0x65;
 			Laufindex++;
-			printf("Laufindex %d \n",Laufindex);
+//			printf("Laufindex %d \n",Laufindex);
 			continue;
 
 		case 0xf6:  /* ö */
@@ -548,9 +550,11 @@ static void send_hello(struct k_work *work)
         strcat(vname_local, " sagt \"Hallo\" zu Jedem!");
 
 	if (bt_mesh_model_send(&vnd_models[0], &ctx, &msg, NULL, NULL) == 0) {
+		sound_activ(1000);
 		board_show_text(vname_local, false, K_SECONDS(2));
 	} else {
-		board_show_text("Uebertragung Fehler!", false, K_SECONDS(2));
+		sound_activ(2000); sound_activ(2000);
+		board_show_text("Ueber- tragungs Fehler!", false, K_SECONDS(2));
 	}
 
 }
@@ -577,7 +581,7 @@ static void send_baduser(struct k_work *work)
 	if (bt_mesh_model_send(&vnd_models[0], &ctx, &msg, NULL, NULL) == 0) {
 		board_show_text("Schlechter  Nutzer!", false, K_SECONDS(2));
 	} else {
-		board_show_text("Uebertragung Fehler!", false, K_SECONDS(2));
+		board_show_text("Ueber- tragungs Fehler!", false, K_SECONDS(2));
 	}
 }
 
@@ -672,7 +676,8 @@ static void start_mesh(struct k_work *work)
 
 		snprintk(buf, sizeof(buf),
 			 "Mesh gestartet\nAddr: 0x%04x", err);
-		board_show_text(buf, false, K_SECONDS(4));
+		sound_activ(1000);
+		board_show_text(buf, false, K_SECONDS(1));
 	}
 }
 
