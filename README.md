@@ -15,3 +15,5 @@ Add. Info: MIT licence for modules qrcodegen.c and qrcodegen.h
 
 New version release 12.2021 with smartphone-support via nRF-Connect-App, activ beeper with hardware revision 1507.3 and 
 a new plain with qr-code and our tux logo.
+
+The Zephyr OS build v2.1.0-rc1 and the Zephyr-sdk-0.10.3 was used for compiling.
